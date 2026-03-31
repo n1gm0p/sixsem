@@ -1,0 +1,265 @@
+:root {
+  --bg: #111827;
+  --surface: #1f2937;
+  --text: #f3f4f6;
+  --muted: #d1d5db;
+  --accent: #38bdf8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background: linear-gradient(180deg, #2a3c55 0%, #23344a 100%);
+  color: var(--text);
+}
+
+.container {
+  width: min(1100px, 92%);
+  margin: 0 auto;
+}
+
+.hero {
+  position: relative;
+  min-height: 62vh;
+  background: linear-gradient(180deg, rgba(20, 30, 44, 0.3), rgba(20, 30, 44, 0.62)),
+    url("https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=55&fm=webp")
+      center / cover no-repeat;
+  border-bottom: 1px solid #2e3a49;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 15% 25%, rgba(255, 255, 255, 0.12), transparent 45%);
+}
+
+.nav {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 0;
+}
+
+.logo {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.menu {
+  list-style: none;
+  display: flex;
+  gap: 1.1rem;
+  margin: 0;
+  padding: 0;
+}
+
+.menu a {
+  color: #f8fafc;
+  text-decoration: none;
+  font-size: 0.92rem;
+  opacity: 0.92;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 46vh;
+  gap: 1rem;
+}
+
+.hero h1 {
+  margin: 0;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(2.3rem, 6vw, 3.9rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: 0.2px;
+  text-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  max-width: 760px;
+}
+
+.hero p {
+  margin: 0;
+  color: #eef4ff;
+  font-size: clamp(0.95rem, 2vw, 1.08rem);
+  letter-spacing: 0.3px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  backdrop-filter: none;
+}
+
+.countries-section {
+  padding: 2.8rem 0 2.2rem;
+}
+
+.countries-section h2,
+.about-content h2 {
+  margin: 0 0 1.4rem;
+  text-align: center;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.7rem, 3.5vw, 2.5rem);
+}
+
+.countries-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.country-card {
+  position: relative;
+  border-radius: 18px;
+  min-height: 235px;
+  overflow: hidden;
+  border: 0;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+}
+
+.country-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0.58));
+}
+
+.country-card * {
+  position: relative;
+  z-index: 2;
+}
+
+.country-card h3 {
+  margin: 0 0 0.45rem;
+  font-size: 1.75rem;
+  font-family: "Playfair Display", serif;
+}
+
+.country-card p {
+  margin: 0 0 0.7rem;
+  font-size: 0.92rem;
+  color: #f8fafc;
+}
+
+.country-card .card-link {
+  align-self: flex-start;
+  display: inline-block;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.38rem 0.9rem;
+  background: rgba(15, 23, 42, 0.66);
+  color: #f1f5f9;
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.about-section {
+  padding: 5.5rem 0;
+  background: linear-gradient(180deg, rgba(111, 166, 183, 0.32), rgba(173, 127, 94, 0.2)),
+    url("https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=55&fm=webp")
+      center / cover no-repeat;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.about-content {
+  text-align: center;
+  max-width: 980px;
+  background: rgba(22, 34, 50, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 22px;
+  padding: 2.2rem 1.4rem;
+  backdrop-filter: blur(3px);
+}
+
+.about-content p {
+  margin: 0 auto 1.5rem;
+  color: #eef2f7;
+  line-height: 1.65;
+  max-width: 760px;
+}
+
+.about-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.about-card {
+  background: rgba(33, 50, 72, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  text-align: left;
+  padding: 1rem;
+}
+
+.about-card h3 {
+  margin: 0 0 0.45rem;
+  font-family: "Playfair Display", serif;
+  font-size: 1.35rem;
+}
+
+.about-card p {
+  margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+.footer {
+  text-align: center;
+  font-size: 0.82rem;
+  color: #dbe4f0;
+  padding: 1rem 0 1.1rem;
+  background: #172537;
+}
+
+@media (max-width: 900px) {
+  .countries-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .hero {
+    min-height: 55vh;
+  }
+
+  .menu {
+    gap: 0.7rem;
+  }
+
+  .menu a {
+    font-size: 0.82rem;
+  }
+
+  .countries-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .country-card {
+    min-height: 210px;
+  }
+
+  .about-section {
+    padding: 4.2rem 0;
+  }
+}
