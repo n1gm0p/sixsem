@@ -27,16 +27,15 @@ function authHeaders() {
 
 function updateAuthUi() {
   const authButton = document.getElementById("auth-btn");
-  const logoutButton = document.getElementById("logout-btn");
-  if (!authButton || !logoutButton) {
+  if (!authButton) {
     return;
   }
   if (currentUser) {
-    authButton.textContent = currentUser.displayName;
-    logoutButton.classList.remove("hidden");
+    authButton.setAttribute("aria-label", "Меню профиля");
+    authButton.title = currentUser.displayName || "Профиль";
   } else {
-    authButton.textContent = "Войти";
-    logoutButton.classList.add("hidden");
+    authButton.setAttribute("aria-label", "Войти");
+    authButton.title = "Войти";
   }
 }
 
@@ -75,18 +74,16 @@ async function logout() {
 }
 
 function initAuthControls() {
-  document.getElementById("auth-btn")?.addEventListener("click", () => {
-    if (currentUser) {
-      window.location.href = "/profile.html";
-      return;
-    }
-    window.location.href = "/";
-  });
-
-  document.getElementById("logout-btn")?.addEventListener("click", () => {
-    logout().catch(() => {
+  setupNavUserMenu({
+    getIsLoggedIn: () => Boolean(currentUser),
+    onGuestClick: () => {
       window.location.href = "/";
-    });
+    },
+    onLogout: () => {
+      logout().catch(() => {
+        window.location.href = "/";
+      });
+    }
   });
 }
 

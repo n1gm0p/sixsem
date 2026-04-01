@@ -10,16 +10,15 @@ function authHeaders() {
 
 function updateAuthUi() {
   const authButton = document.getElementById("auth-btn");
-  const logoutButton = document.getElementById("logout-btn");
-  if (!authButton || !logoutButton) {
+  if (!authButton) {
     return;
   }
   if (currentUser) {
-    authButton.textContent = currentUser.displayName;
-    logoutButton.classList.remove("hidden");
+    authButton.setAttribute("aria-label", "Меню профиля");
+    authButton.title = currentUser.displayName || "Профиль";
   } else {
-    authButton.textContent = "Войти";
-    logoutButton.classList.add("hidden");
+    authButton.setAttribute("aria-label", "Войти");
+    authButton.title = "Войти";
   }
 }
 
@@ -332,18 +331,14 @@ function initAboutTypewriter() {
 function initPage() {
   initAboutTypewriter();
 
-  document.getElementById("auth-btn")?.addEventListener("click", () => {
-    if (currentUser) {
-      window.location.href = "/profile.html";
-      return;
+  setupNavUserMenu({
+    getIsLoggedIn: () => Boolean(currentUser),
+    onGuestClick: () => toggleAuthModal(true),
+    onLogout: () => {
+      logout().catch(() => {
+        alert("Ошибка выхода");
+      });
     }
-    toggleAuthModal(true);
-  });
-
-  document.getElementById("logout-btn")?.addEventListener("click", () => {
-    logout().catch(() => {
-      alert("Ошибка выхода");
-    });
   });
 
   document.querySelector('[data-close-auth="true"]')?.addEventListener("click", () => toggleAuthModal(false));

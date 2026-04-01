@@ -14,34 +14,11 @@
   min-height: 100vh;
 }
 
-.profile-page .hero {
-  min-height: 38vh;
+.profile-page .profile-header.hero {
+  min-height: 0;
+  background: rgba(58, 84, 116, 0.52);
+  backdrop-filter: blur(10px);
   border-bottom: 1px solid #2e3a49;
-}
-
-.profile-page .profile-hero-content {
-  min-height: 22vh;
-  gap: 0.65rem;
-}
-
-.profile-page .hero h1 {
-  font-family: "Playfair Display", serif;
-  font-size: clamp(2rem, 5vw, 3.1rem);
-  font-weight: 700;
-  text-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
-}
-
-.profile-user-tag {
-  margin: 0;
-  font-size: clamp(1rem, 2.2vw, 1.15rem);
-  color: #e2e8f0;
-  letter-spacing: 0.04em;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
-}
-
-.profile-user-tag.profile-user-tag--accent {
-  color: #7dd3fc;
-  font-weight: 500;
 }
 
 .profile-main {
@@ -49,6 +26,10 @@
   padding: 2.25rem 0 3rem;
   width: min(1100px, 92%);
   margin: 0 auto;
+}
+
+#favorites-content {
+  scroll-margin-top: 4.5rem;
 }
 
 .profile-favorites-panel {
@@ -124,14 +105,6 @@
 }
 
 @media (max-width: 620px) {
-  .profile-page .hero {
-    min-height: 32vh;
-  }
-
-  .profile-page .profile-hero-content {
-    min-height: 18vh;
-  }
-
   .profile-favorites-panel {
     padding: 1.15rem;
     border-radius: 18px;

@@ -15,38 +15,32 @@ function setCardBackground(card, country) {
   }
 }
 
-function setupLogout() {
-  const btn = document.getElementById("profile-logout-btn");
-  if (!btn) {
-    return;
-  }
-  if (!token) {
-    btn.classList.add("hidden");
-    return;
-  }
-  btn.classList.remove("hidden");
-  btn.addEventListener("click", async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST", headers: authHeaders() });
-    } catch (error) {
-      // ignore network errors
+function setupProfileNavMenu() {
+  setupNavUserMenu({
+    getIsLoggedIn: () => Boolean(localStorage.getItem(AUTH_TOKEN_KEY)),
+    onGuestClick: () => {
+      window.location.href = "/";
+    },
+    onLogout: async () => {
+      try {
+        await fetch("/api/auth/logout", { method: "POST", headers: authHeaders() });
+      } catch (error) {
+        // ignore network errors
+      }
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      window.location.href = "/";
     }
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    window.location.href = "/";
   });
 }
 
 async function loadProfile() {
-  const profileUser = document.getElementById("profile-user");
   const container = document.getElementById("favorites-content");
 
-  if (!profileUser || !container) {
+  if (!container) {
     return;
   }
 
   if (!token) {
-    profileUser.textContent = "Войдите, чтобы видеть избранное";
-    profileUser.classList.remove("profile-user-tag--accent");
     container.innerHTML =
       '<p class="profile-message">Откройте <a href="/">главную страницу</a> и войдите в аккаунт.</p>';
     return;
@@ -55,16 +49,12 @@ async function loadProfile() {
   const meResponse = await fetch("/api/auth/me", { headers: authHeaders() });
   if (!meResponse.ok) {
     localStorage.removeItem(AUTH_TOKEN_KEY);
-    profileUser.textContent = "Сессия истекла";
-    profileUser.classList.remove("profile-user-tag--accent");
     container.innerHTML =
       '<p class="profile-message profile-message--warn">Войдите снова на <a href="/">главной странице</a>.</p>';
-    document.getElementById("profile-logout-btn")?.classList.add("hidden");
     return;
   }
-  const meData = await meResponse.json();
-  profileUser.textContent = meData.user.displayName;
-  profileUser.classList.add("profile-user-tag--accent");
+
+  await meResponse.json();
 
   const [favoritesResponse, countriesResponse] = await Promise.all([
     fetch("/api/favorites", { headers: authHeaders() }),
@@ -107,16 +97,11 @@ async function loadProfile() {
   });
 }
 
-setupLogout();
+setupProfileNavMenu();
 
 loadProfile().catch(() => {
   const container = document.getElementById("favorites-content");
-  const profileUser = document.getElementById("profile-user");
-  if (profileUser) {
-    profileUser.textContent = "Ошибка загрузки";
-    profileUser.classList.remove("profile-user-tag--accent");
-  }
   if (container) {
-    container.innerHTML = '<p class="profile-message profile-message--error">Не удалось загрузить профиль.</p>';
+    container.innerHTML = '<p class="profile-message profile-message--error">Не удалось загрузить избранное.</p>';
   }
 });
