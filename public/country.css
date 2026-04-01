@@ -50,27 +50,98 @@ body {
   margin: 0;
 }
 
-.logo,
-.back-link {
+.logo {
   color: #fff;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.country-nav-actions {
+.country-nav-menu {
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  max-width: min(100%, 78%);
+}
+
+.country-nav-menu .back-link {
+  font-weight: 500;
+}
+
+.country-title-section {
+  padding-top: 1.35rem;
+}
+
+.country-title-row {
   display: flex;
-  gap: 0.6rem;
   align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
 }
 
-.country-fav-btn {
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  background: rgba(15, 23, 42, 0.44);
-  color: #f8fafc;
-  border-radius: 999px;
-  padding: 0.35rem 0.7rem;
-  font-size: 0.8rem;
+.country-fav-star {
+  flex-shrink: 0;
+  width: 2.9rem;
+  height: 2.9rem;
+  padding: 0;
+  border: none;
+  background: transparent;
   cursor: pointer;
+  color: #f8fafc;
+  line-height: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.35));
+}
+
+.country-fav-star:hover {
+  transform: scale(1.06);
+}
+
+.country-fav-star:active {
+  transform: scale(0.98);
+}
+
+.country-fav-star:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.55);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.country-fav-star-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.country-fav-star-path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.35;
+  stroke-linejoin: round;
+}
+
+.country-fav-star.is-favorite {
+  color: #111111;
+}
+
+.country-fav-star.is-favorite .country-fav-star-path {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 0;
+}
+
+.country-fav-star--guest {
+  opacity: 0.72;
+}
+
+.country-title {
+  margin: 0;
+  flex: 1;
+  min-width: min(100%, 12rem);
+  font-family: "Playfair Display", serif;
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 1.12;
+  text-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
 }
 
 .hero-content {
@@ -82,12 +153,6 @@ body {
   font-family: "Playfair Display", serif;
   text-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   font-size: clamp(2rem, 6vw, 3.3rem);
-}
-
-.country-title {
-  margin: 0 0 0.8rem;
-  font-family: "Playfair Display", serif;
-  font-size: clamp(2rem, 6vw, 3rem);
 }
 
 .section {
@@ -198,18 +263,22 @@ body {
   }
 
   .nav {
-    padding: 0.8rem 0.75rem;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: space-between;
   }
 
-  .logo,
-  .back-link,
-  .country-fav-btn {
-    font-size: 0.9rem;
+  .country-nav-menu {
+    max-width: 72%;
+    flex: 1;
+    min-width: 0;
+    justify-content: flex-end;
+    gap: 0.72rem;
+    flex-wrap: nowrap;
   }
 
-  .country-nav-actions {
-    gap: 0.55rem;
+  .country-fav-star {
+    width: 2.5rem;
+    height: 2.5rem;
   }
 
   .section {

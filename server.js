@@ -53,8 +53,9 @@ function get(db, sql, params = []) {
   });
 }
 
-function verifyPassword(password, storedHash) {
-  return String(password) === String(storedHash);
+/** Пароль хранится в БД как есть (без bcrypt/хэша); только сравнение строк. */
+function passwordMatchesStored(plain, stored) {
+  return String(plain) === String(stored);
 }
 
 function parseBearerToken(headerValue) {
@@ -118,7 +119,7 @@ async function initializeDatabase() {
     `CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
+      password TEXT NOT NULL,
       display_name TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`
@@ -159,19 +160,22 @@ async function initializeDatabase() {
     await run(db, "ALTER TABLE countries ADD COLUMN tips TEXT");
   }
 
+  const userColumns = await all(db, "PRAGMA table_info(users)");
+  const userColumnNames = new Set(userColumns.map((column) => column.name));
+  if (userColumnNames.has("password_hash") && !userColumnNames.has("password")) {
+    await run(db, "ALTER TABLE users RENAME COLUMN password_hash TO password");
+  }
+
   const existing = await all(db, "SELECT id FROM countries LIMIT 1");
 
   if (existing.length === 0) {
     const seedData = [
       ["Египет", "Пирамиды, Красное море", "Открой древнюю историю и теплый отдых у моря.", "linear-gradient(135deg, #7a4b2d, #c07a3f)", "/images/countries/egypt/hero.jpg", "Египет: земля фараонов", "[{\"title\":\"Пирамиды Гизы\",\"text\":\"Единственное из Семи чудес света, сохранившееся до наших дней.\",\"image\":\"/images/countries/egypt/giza.jpg\"},{\"title\":\"Луксорский храм\",\"text\":\"Грандиозный храмовый комплекс на берегу Нила.\",\"image\":\"/images/countries/egypt/luxor.jpg\"},{\"title\":\"Шарм-эль-Шейх\",\"text\":\"Курорт с лучшими местами для дайвинга и снорклинга.\",\"image\":\"/images/countries/egypt/sharm.jpg\"}]", "[\"Лучшее время для поездки - с октября по апрель.\",\"Торгуйтесь на рынках, цены для туристов часто завышены.\",\"Уважайте местные традиции и дресс-код у святынь.\"]"],
-      ["Куба", "Гавана, ритмы, ретро", "Атмосфера старых улиц, музыка и Карибское солнце.", "linear-gradient(135deg, #8c4a24, #d69238)", "", "Куба: ритм Карибов", "[]", "[]"],
       ["Таиланд", "Пляжи, храмы, острова", "Экзотика, бирюзовая вода и насыщенная уличная кухня.", "linear-gradient(135deg, #007f8a, #3eb7b8)", "", "Таиланд: страна улыбок", "[]", "[]"],
-      ["Китай", "Великая стена, мегаполисы", "Контраст древней культуры и современных технологий.", "linear-gradient(135deg, #334f38, #5f7f52)", "", "Китай: древность и будущее", "[]", "[]"],
-      ["Франция", "Париж, Лазурный берег", "Искусство, гастрономия и романтичные маршруты.", "linear-gradient(135deg, #18374f, #2f6d8f)", "", "Франция: вкус жизни", "[]", "[]"],
-      ["Филиппины", "Палаван, тропики", "Белоснежные пляжи и островные приключения круглый год.", "linear-gradient(135deg, #1f2f4e, #3d6ea2)", "", "Филиппины: островной рай", "[]", "[]"],
-      ["Япония", "Токио, сакура, традиции", "Сочетание футуризма и многовековой эстетики.", "linear-gradient(135deg, #3f3f57, #7b6a83)", "", "Япония: гармония контрастов", "[]", "[]"],
-      ["Италия", "Рим, Флоренция, Венеция", "История, живописные улочки и лучшие вкусы Европы.", "linear-gradient(135deg, #8d5a48, #b98764)", "", "Италия: искусство и dolce vita", "[]", "[]"],
-      ["Исландия", "Водопады, ледники", "Северное сияние и маршруты по невероятной природе.", "linear-gradient(135deg, #5a6b7f, #9ab6c9)", "", "Исландия: дикая природа Севера", "[]", "[]"]
+      ["Китай", "Великая стена, мегаполисы", "Китай сочетает тысячелетнюю историю и ультрасовременные мегаполисы: от Великой стены и Запретного города до небоскрёбов Шанхая. Здесь можно прогуляться по древним улочкам, увидеть терракотовую армию и ощутить контраст между традиционными деревнями и ритмом больших городов.", "linear-gradient(135deg, #334f38, #5f7f52)", "/images/countries/china/hero.jpg", "Китай: великая стена и древние тайны", "[{\"title\":\"Великая Китайская стена\",\"text\":\"Одно из самых грандиозных сооружений в истории человечества.\",\"image\":\"/images/countries/china/great-wall.jpg\"},{\"title\":\"Запретный город, Пекин\",\"text\":\"Императорский дворец — сердце китайской культуры.\",\"image\":\"/images/countries/china/forbidden-city.jpg\"},{\"title\":\"Гуйлинь и карстовые горы\",\"text\":\"Живописные ландшафты, вдохновлявшие поэтов на протяжении веков.\",\"image\":\"/images/countries/china/guilin.jpg\"}]", "[\"Установите VPN до поездки: многие привычные сервисы в Китае недоступны.\",\"Выучите несколько фраз на китайском: вне туристических зон с английским бывает сложно.\",\"Пробуйте уличную еду на ночных рынках — выбирайте оживлённые лотки.\"]"],
+      ["Франция", "Париж, Лазурный берег", "Франция сочетает искусство, моду и гастрономию: от парижских бульваров и музеев до лавандовых полей Прованса и виноградников. Каждый регион открывается по-своему — романтично, изысканно и по-настоящему неповторимо.", "linear-gradient(135deg, #18374f, #2f6d8f)", "/images/countries/france/hero.jpg", "Франция: искусство, мода, гастрономия", "[{\"title\":\"Эйфелева башня\",\"text\":\"Главный символ Франции и must-see для первого визита в Париж.\",\"image\":\"/images/countries/france/eiffel.jpg\"},{\"title\":\"Лазурный берег и Ницца\",\"text\":\"Роскошные пляжи, променады и средиземноморский шарм.\",\"image\":\"/images/countries/france/riviera.jpg\"},{\"title\":\"Замки Луары\",\"text\":\"Шедевры ренессансной архитектуры среди парков и реки.\",\"image\":\"/images/countries/france/loire.jpg\"}]", "[\"Бронируйте столики в ресторанах заранее — особенно вечером и в выходные.\",\"В Париже удобно пользоваться метро: купите пакет билетов или проездной на несколько дней.\",\"Многие музеи в первое воскресенье месяца входят бесплатно — уточняйте расписание.\"]"],
+      ["Япония", "Токио, сакура, традиции", "Япония — это контраст футуристического Токио и древнего Киото: неоновые кварталы и тихие храмы, сакура у Фудзи и чайные церемонии. Здесь современность и традиции соседствуют так близко, что каждый день похож на путешествие во времени.", "linear-gradient(135deg, #3f3f57, #7b6a83)", "/images/countries/japan/hero.jpg", "Япония: традиции и футуризм", "[{\"title\":\"Токио: Сибуя и Асакуса\",\"text\":\"Самый оживлённый перекрёсток мира и древний храм Сэнсо-дзи.\",\"image\":\"/images/countries/japan/tokyo.jpg\"},{\"title\":\"Киото\",\"text\":\"Тысячи красных тории, уходящих в гору.\",\"image\":\"/images/countries/japan/kyoto.jpg\"},{\"title\":\"Гора Фудзи\",\"text\":\"Классический вид, особенно красив весной в сезон сакуры.\",\"image\":\"/images/countries/japan/fuji.jpg\"}]", "[\"Оформите JR Pass заранее, если планируете поезда по стране — так обычно выгоднее.\",\"В храмах и святилищах ведите себя тише, не трогайте святыни и следуйте указателям.\",\"Выучите несколько фраз по-японски — даже «спасибо» и «здравствуйте» помогают в общении.\"]"],
+      ["Италия", "Рим, Флоренция, Венеция", "Италия — страна, где античность встречается с современностью. От руин Рима до каналов Венеции, от холмов Тосканы до побережья Амальфи. Это родина пиццы, пасты и лучшего кофе.", "linear-gradient(135deg, #8d5a48, #b98764)", "/images/countries/italy/hero.jpg", "Италия: солнце, искусство и вкус жизни", "[{\"title\":\"Колизей, Рим\",\"text\":\"Символ Вечного города, древний амфитеатр.\",\"image\":\"/images/countries/italy/colosseum.jpg\"},{\"title\":\"Галерея Уффици, Флоренция\",\"text\":\"Шедевры Боттичелли, Леонардо и Рафаэля.\",\"image\":\"/images/countries/italy/uffizi.jpg\"},{\"title\":\"Каналы Венеции\",\"text\":\"Гондолы, мост Риальто и романтика.\",\"image\":\"/images/countries/italy/venice.jpg\"}]", "[\"Бронируйте билеты в музеи онлайн заранее — очереди огромные.\",\"В ресторанах избегайте туристических мест: ищите, где обедают местные.\",\"Капучино пьют только до обеда, эспрессо — в любое время.\"]"]
     ];
 
     for (const country of seedData) {
@@ -233,8 +237,20 @@ app.get("/api/countries/:id", async (req, res) => {
   }
 });
 
+function authSqliteMessage(error, actionLabel) {
+  const label = actionLabel || "регистрации";
+  if (!error || !error.message) {
+    return `Ошибка ${label}`;
+  }
+  if (error.message.includes("no column named")) {
+    return `Ошибка ${label}. Перезапустите сервер (остановите и снова запустите npm run dev или node server.js), затем попробуйте ещё раз.`;
+  }
+  return `Ошибка ${label}`;
+}
+
 app.post("/api/auth/register", async (req, res) => {
-  const { email, password, displayName } = req.body;
+  const body = req.body && typeof req.body === "object" ? req.body : {};
+  const { email, password, displayName } = body;
   if (!email || !password || !displayName) {
     res.status(400).json({ message: "Заполните email, пароль и имя" });
     return;
@@ -254,19 +270,21 @@ app.post("/api/auth/register", async (req, res) => {
     }
     const result = await run(
       db,
-      "INSERT INTO users (email, password_hash, display_name) VALUES (?, ?, ?)",
+      "INSERT INTO users (email, password, display_name) VALUES (?, ?, ?)",
       [normalizedEmail, String(password), String(displayName).trim()]
     );
     res.status(201).json({ id: result.lastID, email: normalizedEmail, displayName: String(displayName).trim() });
   } catch (error) {
-    res.status(500).json({ message: "Ошибка регистрации" });
+    console.error("register error:", error);
+    res.status(500).json({ message: authSqliteMessage(error, "регистрации") });
   } finally {
     db.close();
   }
 });
 
 app.post("/api/auth/login", async (req, res) => {
-  const { email, password } = req.body;
+  const body = req.body && typeof req.body === "object" ? req.body : {};
+  const { email, password } = body;
   if (!email || !password) {
     res.status(400).json({ message: "Введите email и пароль" });
     return;
@@ -276,10 +294,10 @@ app.post("/api/auth/login", async (req, res) => {
   try {
     const user = await get(
       db,
-      "SELECT id, email, password_hash AS passwordHash, display_name AS displayName FROM users WHERE email = ?",
+      "SELECT id, email, password, display_name AS displayName FROM users WHERE email = ?",
       [String(email).trim().toLowerCase()]
     );
-    if (!user || !verifyPassword(password, user.passwordHash)) {
+    if (!user || !passwordMatchesStored(password, user.password)) {
       res.status(401).json({ message: "Неверный email или пароль" });
       return;
     }
@@ -293,7 +311,8 @@ app.post("/api/auth/login", async (req, res) => {
       user: { id: user.id, email: user.email, displayName: user.displayName }
     });
   } catch (error) {
-    res.status(500).json({ message: "Ошибка входа" });
+    console.error("login error:", error);
+    res.status(500).json({ message: authSqliteMessage(error, "входа") });
   } finally {
     db.close();
   }

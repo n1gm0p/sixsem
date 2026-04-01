@@ -18,10 +18,76 @@ function escapeHtml(value) {
 }
 
 const AUTH_TOKEN_KEY = "tourism_auth_token";
-const currentToken = localStorage.getItem(AUTH_TOKEN_KEY) || "";
+let currentToken = localStorage.getItem(AUTH_TOKEN_KEY) || "";
+let currentUser = null;
 
 function authHeaders() {
   return currentToken ? { Authorization: `Bearer ${currentToken}` } : {};
+}
+
+function updateAuthUi() {
+  const authButton = document.getElementById("auth-btn");
+  const logoutButton = document.getElementById("logout-btn");
+  if (!authButton || !logoutButton) {
+    return;
+  }
+  if (currentUser) {
+    authButton.textContent = currentUser.displayName;
+    logoutButton.classList.remove("hidden");
+  } else {
+    authButton.textContent = "Войти";
+    logoutButton.classList.add("hidden");
+  }
+}
+
+async function fetchCurrentUser() {
+  if (!currentToken) {
+    currentUser = null;
+    updateAuthUi();
+    return;
+  }
+  try {
+    const response = await fetch("/api/auth/me", { headers: authHeaders() });
+    if (!response.ok) {
+      throw new Error("unauthorized");
+    }
+    const data = await response.json();
+    currentUser = data.user;
+  } catch (error) {
+    currentToken = "";
+    currentUser = null;
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+  }
+  updateAuthUi();
+}
+
+async function logout() {
+  try {
+    await fetch("/api/auth/logout", { method: "POST", headers: authHeaders() });
+  } catch (error) {
+    // ignore
+  }
+  currentToken = "";
+  currentUser = null;
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  updateAuthUi();
+  window.location.href = "/";
+}
+
+function initAuthControls() {
+  document.getElementById("auth-btn")?.addEventListener("click", () => {
+    if (currentUser) {
+      window.location.href = "/profile.html";
+      return;
+    }
+    window.location.href = "/";
+  });
+
+  document.getElementById("logout-btn")?.addEventListener("click", () => {
+    logout().catch(() => {
+      window.location.href = "/";
+    });
+  });
 }
 
 async function checkFavorite(countryId) {
@@ -53,6 +119,47 @@ async function toggleFavorite(countryId) {
   return Boolean(data.isFavorite);
 }
 
+function setStarVisual(star, isFavorite) {
+  star.classList.toggle("is-favorite", isFavorite);
+  star.setAttribute("aria-pressed", isFavorite ? "true" : "false");
+  star.setAttribute("aria-label", isFavorite ? "Убрать из избранного" : "Добавить в избранное");
+  star.title = isFavorite ? "В избранном" : "В избранное";
+}
+
+async function setupFavoriteStar(countryId) {
+  const star = document.getElementById("country-favorite-star");
+  if (!star) {
+    return;
+  }
+
+  star.style.display = "";
+
+  const applyState = async () => {
+    if (!currentToken) {
+      setStarVisual(star, false);
+      star.classList.add("country-fav-star--guest");
+      return;
+    }
+    star.classList.remove("country-fav-star--guest");
+    const fav = await checkFavorite(countryId);
+    setStarVisual(star, fav);
+  };
+
+  await applyState();
+
+  star.onclick = async () => {
+    if (!currentToken) {
+      alert("Сначала войдите в аккаунт на главной странице");
+      return;
+    }
+    const nextState = await toggleFavorite(countryId);
+    if (nextState === null) {
+      return;
+    }
+    setStarVisual(star, nextState);
+  };
+}
+
 async function loadCountry() {
   const countryId = getCountryIdFromUrl();
   const hero = document.querySelector(".country-hero");
@@ -60,7 +167,9 @@ async function loadCountry() {
   const description = document.getElementById("country-description");
   const places = document.getElementById("what-to-see");
   const tips = document.getElementById("tips-list");
-  const favoriteButton = document.getElementById("country-favorite-btn");
+  const starBtn = document.getElementById("country-favorite-star");
+
+  await fetchCurrentUser();
 
   try {
     const response = await fetch(`/api/countries/${countryId}`);
@@ -73,7 +182,13 @@ async function loadCountry() {
     document.title = `${country.name} | On The Move`;
     heroTitle.textContent = country.heroTitle || country.name;
     description.textContent = country.description || "";
-    hero.style.backgroundImage = "none";
+    if (country.heroImage) {
+      hero.style.backgroundImage = `linear-gradient(180deg, rgba(10, 16, 28, 0.52), rgba(10, 16, 28, 0.82)), url("${country.heroImage}")`;
+      hero.style.backgroundSize = "cover";
+      hero.style.backgroundPosition = "center";
+    } else {
+      hero.style.backgroundImage = "none";
+    }
 
     places.innerHTML = "";
     if (Array.isArray(country.whatToSee) && country.whatToSee.length > 0) {
@@ -107,27 +222,17 @@ async function loadCountry() {
       tips.innerHTML = "<li>Советы скоро появятся.</li>";
     }
 
-    if (favoriteButton) {
-      if (!currentToken) {
-        favoriteButton.style.display = "none";
-      } else {
-        const initialFavorite = await checkFavorite(countryId);
-        favoriteButton.textContent = initialFavorite ? "★ Избранное" : "☆ В избранное";
-        favoriteButton.onclick = async () => {
-          const nextState = await toggleFavorite(countryId);
-          if (nextState === null) {
-            return;
-          }
-          favoriteButton.textContent = nextState ? "★ Избранное" : "☆ В избранное";
-        };
-      }
-    }
+    await setupFavoriteStar(countryId);
   } catch (error) {
     heroTitle.textContent = "Страна не найдена";
     description.textContent = "Проверьте ссылку или вернитесь на главную страницу.";
     places.innerHTML = "";
     tips.innerHTML = "<li><a href=\"/\" style=\"color:#93c5fd\">Перейти на главную</a></li>";
+    if (starBtn) {
+      starBtn.style.display = "none";
+    }
   }
 }
 
+initAuthControls();
 loadCountry();

@@ -15,13 +15,40 @@ function setCardBackground(card, country) {
   }
 }
 
+function setupLogout() {
+  const btn = document.getElementById("profile-logout-btn");
+  if (!btn) {
+    return;
+  }
+  if (!token) {
+    btn.classList.add("hidden");
+    return;
+  }
+  btn.classList.remove("hidden");
+  btn.addEventListener("click", async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", headers: authHeaders() });
+    } catch (error) {
+      // ignore network errors
+    }
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    window.location.href = "/";
+  });
+}
+
 async function loadProfile() {
   const profileUser = document.getElementById("profile-user");
   const container = document.getElementById("favorites-content");
 
+  if (!profileUser || !container) {
+    return;
+  }
+
   if (!token) {
-    profileUser.textContent = "Требуется авторизация";
-    container.innerHTML = "<p>Войдите на главной странице, чтобы увидеть избранное.</p>";
+    profileUser.textContent = "Войдите, чтобы видеть избранное";
+    profileUser.classList.remove("profile-user-tag--accent");
+    container.innerHTML =
+      '<p class="profile-message">Откройте <a href="/">главную страницу</a> и войдите в аккаунт.</p>';
     return;
   }
 
@@ -29,11 +56,15 @@ async function loadProfile() {
   if (!meResponse.ok) {
     localStorage.removeItem(AUTH_TOKEN_KEY);
     profileUser.textContent = "Сессия истекла";
-    container.innerHTML = "<p>Снова войдите на главной странице.</p>";
+    profileUser.classList.remove("profile-user-tag--accent");
+    container.innerHTML =
+      '<p class="profile-message profile-message--warn">Войдите снова на <a href="/">главной странице</a>.</p>';
+    document.getElementById("profile-logout-btn")?.classList.add("hidden");
     return;
   }
   const meData = await meResponse.json();
   profileUser.textContent = meData.user.displayName;
+  profileUser.classList.add("profile-user-tag--accent");
 
   const [favoritesResponse, countriesResponse] = await Promise.all([
     fetch("/api/favorites", { headers: authHeaders() }),
@@ -41,7 +72,7 @@ async function loadProfile() {
   ]);
 
   if (!favoritesResponse.ok || !countriesResponse.ok) {
-    container.innerHTML = "<p>Не удалось загрузить избранное.</p>";
+    container.innerHTML = '<p class="profile-message profile-message--error">Не удалось загрузить избранное. Попробуйте позже.</p>';
     return;
   }
 
@@ -51,7 +82,8 @@ async function loadProfile() {
   const favorites = countries.filter((country) => favoriteIds.has(country.id));
 
   if (favorites.length === 0) {
-    container.innerHTML = "<p>Пока пусто. Добавьте страны в избранное на главной странице.</p>";
+    container.innerHTML =
+      '<p class="profile-message">Пока пусто. Добавьте страны в избранное в разделе <a href="/#countries">Топ стран</a>.</p>';
     return;
   }
 
@@ -60,20 +92,31 @@ async function loadProfile() {
     const card = document.createElement("article");
     card.className = "country-card";
     setCardBackground(card, country);
+    const safeName = String(country.name).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
     card.innerHTML = `
-      <h3>${country.name}</h3>
-      <p>${country.subtitle}</p>
+      <a class="card-hit-area" href="/country.html?id=${country.id}" aria-label="Открыть гид: ${safeName}"></a>
+      <div class="card-main">
+        <h3>${country.name}</h3>
+        <p>${country.subtitle}</p>
+      </div>
       <div class="card-actions">
-        <a class="card-link" href="/country.html?id=${country.id}">Читать гид</a>
+        <span class="card-link">Читать гид</span>
       </div>
     `;
     container.appendChild(card);
   });
 }
 
+setupLogout();
+
 loadProfile().catch(() => {
   const container = document.getElementById("favorites-content");
+  const profileUser = document.getElementById("profile-user");
+  if (profileUser) {
+    profileUser.textContent = "Ошибка загрузки";
+    profileUser.classList.remove("profile-user-tag--accent");
+  }
   if (container) {
-    container.innerHTML = "<p>Ошибка загрузки профиля.</p>";
+    container.innerHTML = '<p class="profile-message profile-message--error">Не удалось загрузить профиль.</p>';
   }
 });

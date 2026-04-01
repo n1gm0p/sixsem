@@ -23,12 +23,21 @@ function updateAuthUi() {
   }
 }
 
+function escapeAttr(value) {
+  return String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+
 function buildCountryCardMarkup(country, showFavoriteButton = true) {
+  const href = `/country.html?id=${country.id}`;
+  const label = escapeAttr(`Открыть гид: ${country.name}`);
   return `
-    <h3>${country.name}</h3>
-    <p>${country.subtitle}</p>
+    <a class="card-hit-area" href="${href}" aria-label="${label}"></a>
+    <div class="card-main">
+      <h3>${country.name}</h3>
+      <p>${country.subtitle}</p>
+    </div>
     <div class="card-actions">
-      <a class="card-link" href="/country.html?id=${country.id}">Читать гид</a>
+      <span class="card-link">Читать гид</span>
       ${
         showFavoriteButton
           ? `<button class="fav-btn" type="button" data-country-id="${country.id}">
@@ -267,7 +276,62 @@ async function loadCountries() {
   }
 }
 
+function initAboutTypewriter() {
+  const el = document.getElementById("about-lead");
+  const full = el?.dataset?.typewriterText?.trim();
+  if (!el || !full) {
+    return;
+  }
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    el.textContent = full;
+    return;
+  }
+
+  el.textContent = "";
+  const typed = document.createElement("span");
+  typed.className = "about-typed";
+  const caret = document.createElement("span");
+  caret.className = "about-caret";
+  caret.setAttribute("aria-hidden", "true");
+  caret.textContent = "|";
+  el.appendChild(typed);
+  el.appendChild(caret);
+
+  const msPerChar = 11;
+  let i = 0;
+
+  function step() {
+    if (i < full.length) {
+      i += 1;
+      typed.textContent = full.slice(0, i);
+      window.setTimeout(step, msPerChar);
+    } else {
+      caret.remove();
+    }
+  }
+
+  const section = document.getElementById("about");
+  if (!section) {
+    step();
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting) {
+        observer.disconnect();
+        step();
+      }
+    },
+    { threshold: 0.22, rootMargin: "0px 0px -8% 0px" }
+  );
+  observer.observe(section);
+}
+
 function initPage() {
+  initAboutTypewriter();
+
   document.getElementById("auth-btn")?.addEventListener("click", () => {
     if (currentUser) {
       window.location.href = "/profile.html";

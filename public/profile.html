@@ -11,40 +11,44 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
-    <style>
-      .profile-main { padding: 2rem 0 2.5rem; }
-      .profile-header { margin-bottom: 1.2rem; }
-      .profile-header h1 { margin: 0; font-family: "Playfair Display", serif; }
-      .profile-header p { margin: 0.35rem 0 0; color: #e2ebf8; }
-    </style>
+    <link rel="stylesheet" href="./profile.css" />
   </head>
-  <body>
-    <div style="min-height: 100vh; display: flex; flex-direction: column;">
-    <header class="hero" style="min-height: 28vh;">
-      <div class="overlay"></div>
-      <nav class="nav container">
-        <a class="logo" href="/">On the Move</a>
-        <ul class="menu">
-          <li><a href="/">На главную</a></li>
-        </ul>
-      </nav>
-      <div class="hero-content container" style="min-height: 16vh;">
-        <h1>Мой профиль</h1>
-        <p id="profile-user">Загрузка...</p>
-      </div>
-    </header>
+  <body class="profile-page">
+    <div class="profile-layout">
+      <header class="hero">
+        <div class="overlay"></div>
+        <nav class="nav container">
+          <a class="logo" href="/">On the Move</a>
+          <ul class="menu">
+            <li><a href="/#about">О нас</a></li>
+            <li><a href="/#countries">Топ стран</a></li>
+            <li><a href="/">На главную</a></li>
+            <li class="nav-auth-group">
+              <button id="profile-logout-btn" type="button" class="nav-btn nav-btn--primary nav-btn--logout hidden">
+                Выйти
+              </button>
+            </li>
+          </ul>
+        </nav>
+        <div class="hero-content container profile-hero-content">
+          <h1 class="hero-title-animate">Мой профиль</h1>
+          <p id="profile-user" class="profile-user-tag hero-tagline-animate">Загрузка…</p>
+        </div>
+      </header>
 
-    <main class="profile-main container" style="flex: 1;">
-      <section class="profile-header">
-        <h1>Избранные страны</h1>
-        <p>Ваши сохраненные направления для будущих поездок.</p>
-      </section>
-      <section id="favorites-content" class="countries-grid"></section>
-    </main>
+      <main class="profile-main">
+        <div class="profile-favorites-panel">
+          <div class="profile-section-head">
+            <h2>Избранные страны</h2>
+            <p class="profile-section-sub">Сохранённые направления — откройте гид или добавьте новые на главной.</p>
+          </div>
+          <div id="favorites-content" class="countries-grid profile-favorites-grid"></div>
+        </div>
+      </main>
 
-    <footer class="footer">
-      <p>© 2026 On the move — вдохновляйся и путешествуй</p>
-    </footer>
+      <footer class="footer">
+        <p>© 2026 On the move — вдохновляйся и путешествуй</p>
+      </footer>
     </div>
 
     <script src="./profile.js"></script>

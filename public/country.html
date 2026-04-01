@@ -10,6 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Playfair+Display:wght@600;700&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./country.css" />
   </head>
   <body>
@@ -17,15 +18,39 @@
       <header class="country-hero">
         <nav class="nav container">
           <a class="logo" href="/">On the Move</a>
-          <div class="country-nav-actions">
-            <button id="country-favorite-btn" class="country-fav-btn" type="button">☆ В избранное</button>
-            <a class="back-link" href="/">Назад</a>
-          </div>
+          <ul class="menu country-nav-menu">
+            <li><a href="/#about">О нас</a></li>
+            <li><a href="/#countries">Топ стран</a></li>
+            <li><a class="back-link" href="/">На главную</a></li>
+            <li class="nav-auth-group">
+              <button id="auth-btn" type="button" class="nav-btn nav-btn--primary" title="Войти или открыть профиль">
+                Войти
+              </button>
+              <button id="logout-btn" type="button" class="nav-btn nav-btn--primary nav-btn--logout hidden">Выйти</button>
+            </li>
+          </ul>
         </nav>
       </header>
 
-      <section class="container section">
-        <h1 id="hero-title" class="country-title">Страна</h1>
+      <section class="container section country-title-section">
+        <div class="country-title-row">
+          <h1 id="hero-title" class="country-title">Страна</h1>
+          <button
+            type="button"
+            id="country-favorite-star"
+            class="country-fav-star"
+            aria-label="Добавить в избранное"
+            aria-pressed="false"
+            title="В избранное"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="country-fav-star-svg">
+              <path
+                class="country-fav-star-path"
+                d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+              />
+            </svg>
+          </button>
+        </div>
         <h2>О стране</h2>
         <p id="country-description"></p>
       </section>

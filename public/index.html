@@ -20,45 +20,28 @@
         <ul class="menu nav-actions">
           <li><a href="#about">О нас</a></li>
           <li><a href="#countries">Топ стран</a></li>
-          <li><button id="auth-btn" type="button" class="nav-btn">Войти</button></li>
-          <li><button id="logout-btn" type="button" class="nav-btn hidden">Выйти</button></li>
+          <li class="nav-auth-group">
+            <button id="auth-btn" type="button" class="nav-btn nav-btn--primary" title="Войти или открыть профиль">Войти</button>
+            <button id="logout-btn" type="button" class="nav-btn nav-btn--primary nav-btn--logout hidden">Выйти</button>
+          </li>
         </ul>
       </nav>
       <div class="hero-content container">
-        <h1>Путешествуй, чтобы жить</h1>
-        <p>Открой мир через новые впечатления</p>
+        <h1 class="hero-title-animate">Путешествуй, чтобы жить</h1>
+        <p class="hero-tagline-animate">Открой мир через новые впечатления</p>
       </div>
     </header>
 
     <main>
       <section id="countries" class="countries-section container">
-        <h2>Топ-9 стран для путешествий</h2>
+        <h2>Топ-6 стран для путешествий</h2>
         <div id="countries-grid" class="countries-grid"></div>
       </section>
 
       <section id="about" class="about-section">
-        <div class="container about-content">
-          <h2>Почему путешествия меняют нас</h2>
-          <p>
-            Путешествия - это не просто смена обстановки. Это возможность
-            выйти из зоны комфорта, увидеть мир другими глазами и обогатить
-            внутренний мир. Каждое путешествие дарит новые знания, знакомства и
-            воспоминания, которые остаются на всю жизнь.
-          </p>
-          <div class="about-grid">
-            <article class="about-card">
-              <h3>Новый взгляд</h3>
-              <p>Каждая страна показывает, как по-разному можно жить, работать и мечтать.</p>
-            </article>
-            <article class="about-card">
-              <h3>Личный рост</h3>
-              <p>Маршруты, самостоятельные решения и новые люди развивают уверенность.</p>
-            </article>
-            <article class="about-card">
-              <h3>Сильные эмоции</h3>
-              <p>Моменты в путешествии становятся воспоминаниями, к которым хочется возвращаться.</p>
-            </article>
-          </div>
+        <div class="container about-inner">
+          <h2 class="about-heading">Почему путешествия меняют нас</h2>
+          <p class="about-lead" id="about-lead" aria-live="polite" data-typewriter-text="Путешествия - это не просто смена обстановки. Это возможность выйти из зоны комфорта, увидеть мир другими глазами и обогатить внутренний мир. Каждое путешествие дарит новые знания, знакомства и воспоминания, которые остаются на всю жизнь."></p>
         </div>
       </section>
     </main>
