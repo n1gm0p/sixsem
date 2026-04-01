@@ -38,10 +38,16 @@ body {
 .nav {
   position: relative;
   z-index: 2;
-  padding: 1rem 0;
+  padding: 1.1rem 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: rgba(7, 12, 22, 0.44);
+}
+
+.nav.container {
+  width: 100%;
+  margin: 0;
 }
 
 .logo,
@@ -49,6 +55,22 @@ body {
   color: #fff;
   text-decoration: none;
   font-weight: 600;
+}
+
+.country-nav-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.country-fav-btn {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(15, 23, 42, 0.44);
+  color: #f8fafc;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  cursor: pointer;
 }
 
 .hero-content {
@@ -176,7 +198,18 @@ body {
   }
 
   .nav {
-    padding: 0.8rem 0;
+    padding: 0.8rem 0.75rem;
+    align-items: flex-start;
+  }
+
+  .logo,
+  .back-link,
+  .country-fav-btn {
+    font-size: 0.9rem;
+  }
+
+  .country-nav-actions {
+    gap: 0.55rem;
   }
 
   .section {

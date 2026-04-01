@@ -17,6 +17,42 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+const AUTH_TOKEN_KEY = "tourism_auth_token";
+const currentToken = localStorage.getItem(AUTH_TOKEN_KEY) || "";
+
+function authHeaders() {
+  return currentToken ? { Authorization: `Bearer ${currentToken}` } : {};
+}
+
+async function checkFavorite(countryId) {
+  if (!currentToken) {
+    return false;
+  }
+  const response = await fetch("/api/favorites", { headers: authHeaders() });
+  if (!response.ok) {
+    return false;
+  }
+  const data = await response.json();
+  return Array.isArray(data.favorites) && data.favorites.includes(Number(countryId));
+}
+
+async function toggleFavorite(countryId) {
+  if (!currentToken) {
+    alert("Сначала войдите в аккаунт на главной странице");
+    return null;
+  }
+  const response = await fetch(`/api/favorites/${countryId}`, {
+    method: "POST",
+    headers: authHeaders()
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    alert(data.message || "Ошибка избранного");
+    return null;
+  }
+  return Boolean(data.isFavorite);
+}
+
 async function loadCountry() {
   const countryId = getCountryIdFromUrl();
   const hero = document.querySelector(".country-hero");
@@ -24,6 +60,7 @@ async function loadCountry() {
   const description = document.getElementById("country-description");
   const places = document.getElementById("what-to-see");
   const tips = document.getElementById("tips-list");
+  const favoriteButton = document.getElementById("country-favorite-btn");
 
   try {
     const response = await fetch(`/api/countries/${countryId}`);
@@ -68,6 +105,22 @@ async function loadCountry() {
       });
     } else {
       tips.innerHTML = "<li>Советы скоро появятся.</li>";
+    }
+
+    if (favoriteButton) {
+      if (!currentToken) {
+        favoriteButton.style.display = "none";
+      } else {
+        const initialFavorite = await checkFavorite(countryId);
+        favoriteButton.textContent = initialFavorite ? "★ Избранное" : "☆ В избранное";
+        favoriteButton.onclick = async () => {
+          const nextState = await toggleFavorite(countryId);
+          if (nextState === null) {
+            return;
+          }
+          favoriteButton.textContent = nextState ? "★ Избранное" : "☆ В избранное";
+        };
+      }
     }
   } catch (error) {
     heroTitle.textContent = "Страна не найдена";

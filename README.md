@@ -16,6 +16,12 @@ npm run dev
 - `GET /api/countries` — получить список стран
 - `GET /api/countries/:id` — получить детальную информацию по стране
 - `POST /api/countries` — добавить страну
+- `POST /api/auth/register` — регистрация
+- `POST /api/auth/login` — вход (возвращает bearer token)
+- `GET /api/auth/me` — текущий пользователь
+- `POST /api/auth/logout` — выход
+- `GET /api/favorites` — получить избранные страны пользователя
+- `POST /api/favorites/:countryId` — добавить/убрать страну из избранного (toggle)
 
 Пример тела запроса:
 
@@ -53,3 +59,11 @@ npm run dev
 - `public/images/countries/egypt/sharm.jpg`
 
 После загрузки используйте эти пути в БД/API (например `"/images/countries/egypt/hero.jpg"`).
+
+## Авторизация и избранное
+
+- На главной есть кнопка `Войти` (вход/регистрация через простые prompt-диалоги).
+- После входа можно добавлять страны в избранное:
+  - на карточках главной;
+  - на странице конкретной страны.
+- Токен хранится в `localStorage` браузера.

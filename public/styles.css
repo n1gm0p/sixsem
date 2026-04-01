@@ -25,7 +25,7 @@ body {
 .hero {
   position: relative;
   min-height: 62vh;
-  background: linear-gradient(180deg, rgba(20, 30, 44, 0.3), rgba(20, 30, 44, 0.62)),
+  background: linear-gradient(180deg, rgba(10, 16, 28, 0.56), rgba(10, 16, 28, 0.78)),
     url("https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=55&fm=webp")
       center / cover no-repeat;
   border-bottom: 1px solid #2e3a49;
@@ -35,6 +35,7 @@ body {
   position: absolute;
   inset: 0;
   background: radial-gradient(circle at 15% 25%, rgba(255, 255, 255, 0.12), transparent 45%);
+  pointer-events: none;
 }
 
 .nav {
@@ -44,19 +45,36 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 1.1rem 0;
+  background: rgba(7, 12, 22, 0.44);
+  border-radius: 0;
+  padding-left: 1.25rem;
+  padding-right: 1.5rem;
+}
+
+.nav.container {
+  width: 100%;
+  margin: 0;
 }
 
 .logo {
   font-size: 1rem;
   font-weight: 700;
+  color: #f8fafc;
+  text-decoration: none;
 }
 
 .menu {
   list-style: none;
   display: flex;
+  align-items: center;
   gap: 1.1rem;
   margin: 0;
   padding: 0;
+}
+
+.menu li {
+  display: flex;
+  align-items: center;
 }
 
 .menu a {
@@ -64,6 +82,26 @@ body {
   text-decoration: none;
   font-size: 0.92rem;
   opacity: 0.92;
+  line-height: 1;
+}
+
+.nav-btn {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(15, 23, 42, 0.44);
+  color: #f8fafc;
+  border-radius: 999px;
+  padding: 0.42rem 0.7rem 0.28rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
+  line-height: 1;
+  transform: translateY(2px);
+}
+
+.hidden {
+  display: none !important;
 }
 
 .hero-content {
@@ -130,6 +168,12 @@ body {
   flex-direction: column;
   justify-content: flex-end;
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.country-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 36px rgba(0, 0, 0, 0.32);
 }
 
 .country-card::before {
@@ -166,6 +210,99 @@ body {
   color: #f1f5f9;
   font-size: 0.8rem;
   text-decoration: none;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.fav-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.38rem 0.75rem;
+  background: rgba(15, 23, 42, 0.66);
+  color: #f1f5f9;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+}
+
+.auth-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.72);
+}
+
+.auth-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 92%);
+  background: linear-gradient(180deg, rgba(23, 37, 57, 0.98), rgba(18, 30, 47, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.auth-title {
+  margin: 0 0 0.85rem;
+  font-size: 1.1rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.auth-form label {
+  font-size: 0.86rem;
+  color: #dbeafe;
+}
+
+.auth-form input {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(15, 23, 42, 0.55);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+}
+
+.auth-submit {
+  margin-top: 0.3rem;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+  background: #0284c7;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-error {
+  margin: 0.2rem 0 0;
+  color: #fecaca;
+  font-size: 0.85rem;
+}
+
+.auth-switch-mode {
+  margin-top: 0.7rem;
+  border: 0;
+  background: transparent;
+  color: #bfdbfe;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
 }
 
 .about-section {
@@ -243,12 +380,30 @@ body {
     min-height: 55vh;
   }
 
-  .menu {
-    gap: 0.7rem;
+  .nav {
+    padding: 0.8rem 0.75rem;
+    align-items: flex-start;
   }
 
-  .menu a {
-    font-size: 0.82rem;
+  .logo {
+    font-size: 1.02rem;
+    margin-top: 0.1rem;
+  }
+
+  .menu {
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 72%;
+  }
+
+  .menu a,
+  .nav-btn {
+    font-size: 0.88rem;
+  }
+
+  .nav-btn {
+    padding: 0.36rem 0.68rem;
   }
 
   .countries-grid {

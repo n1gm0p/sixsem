@@ -1,6 +1,7 @@
 const path = require("path");
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
+const crypto = require("crypto");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,6 +10,8 @@ require("fs").mkdirSync(path.join(__dirname, "data"), { recursive: true });
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+
+const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 14;
 
 function createDb() {
   return new sqlite3.Database(DB_PATH);
@@ -50,8 +53,49 @@ function get(db, sql, params = []) {
   });
 }
 
+function verifyPassword(password, storedHash) {
+  return String(password) === String(storedHash);
+}
+
+function parseBearerToken(headerValue) {
+  if (!headerValue || !headerValue.startsWith("Bearer ")) {
+    return null;
+  }
+  return headerValue.slice("Bearer ".length).trim();
+}
+
+async function getAuthUser(req) {
+  const token = parseBearerToken(req.headers.authorization);
+  if (!token) {
+    return null;
+  }
+
+  const db = createDb();
+  try {
+    const session = await get(
+      db,
+      `SELECT s.user_id AS userId, s.expires_at AS expiresAt, u.id, u.email, u.display_name AS displayName
+       FROM sessions s
+       JOIN users u ON u.id = s.user_id
+       WHERE s.token = ?`,
+      [token]
+    );
+    if (!session) {
+      return null;
+    }
+    if (Date.now() > Number(session.expiresAt)) {
+      await run(db, "DELETE FROM sessions WHERE token = ?", [token]);
+      return null;
+    }
+    return { id: session.id, email: session.email, displayName: session.displayName, token };
+  } finally {
+    db.close();
+  }
+}
+
 async function initializeDatabase() {
   const db = createDb();
+  await run(db, "PRAGMA foreign_keys = ON");
 
   await run(
     db,
@@ -66,6 +110,40 @@ async function initializeDatabase() {
       what_to_see TEXT,
       tips TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`
+  );
+
+  await run(
+    db,
+    `CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      display_name TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`
+  );
+
+  await run(
+    db,
+    `CREATE TABLE IF NOT EXISTS sessions (
+      token TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`
+  );
+
+  await run(
+    db,
+    `CREATE TABLE IF NOT EXISTS favorites (
+      user_id INTEGER NOT NULL,
+      country_id INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (user_id, country_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (country_id) REFERENCES countries(id) ON DELETE CASCADE
     )`
   );
 
@@ -150,6 +228,149 @@ app.get("/api/countries/:id", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Ошибка получения страны" });
+  } finally {
+    db.close();
+  }
+});
+
+app.post("/api/auth/register", async (req, res) => {
+  const { email, password, displayName } = req.body;
+  if (!email || !password || !displayName) {
+    res.status(400).json({ message: "Заполните email, пароль и имя" });
+    return;
+  }
+  if (String(password).length < 6) {
+    res.status(400).json({ message: "Пароль должен быть минимум 6 символов" });
+    return;
+  }
+
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const db = createDb();
+  try {
+    const existing = await get(db, "SELECT id FROM users WHERE email = ?", [normalizedEmail]);
+    if (existing) {
+      res.status(409).json({ message: "Пользователь с таким email уже существует" });
+      return;
+    }
+    const result = await run(
+      db,
+      "INSERT INTO users (email, password_hash, display_name) VALUES (?, ?, ?)",
+      [normalizedEmail, String(password), String(displayName).trim()]
+    );
+    res.status(201).json({ id: result.lastID, email: normalizedEmail, displayName: String(displayName).trim() });
+  } catch (error) {
+    res.status(500).json({ message: "Ошибка регистрации" });
+  } finally {
+    db.close();
+  }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    res.status(400).json({ message: "Введите email и пароль" });
+    return;
+  }
+
+  const db = createDb();
+  try {
+    const user = await get(
+      db,
+      "SELECT id, email, password_hash AS passwordHash, display_name AS displayName FROM users WHERE email = ?",
+      [String(email).trim().toLowerCase()]
+    );
+    if (!user || !verifyPassword(password, user.passwordHash)) {
+      res.status(401).json({ message: "Неверный email или пароль" });
+      return;
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = Date.now() + TOKEN_TTL_MS;
+    await run(db, "INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)", [token, user.id, expiresAt]);
+
+    res.json({
+      token,
+      user: { id: user.id, email: user.email, displayName: user.displayName }
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Ошибка входа" });
+  } finally {
+    db.close();
+  }
+});
+
+app.get("/api/auth/me", async (req, res) => {
+  const user = await getAuthUser(req);
+  if (!user) {
+    res.status(401).json({ message: "Требуется вход" });
+    return;
+  }
+  res.json({ user: { id: user.id, email: user.email, displayName: user.displayName } });
+});
+
+app.post("/api/auth/logout", async (req, res) => {
+  const token = parseBearerToken(req.headers.authorization);
+  if (!token) {
+    res.status(200).json({ ok: true });
+    return;
+  }
+  const db = createDb();
+  try {
+    await run(db, "DELETE FROM sessions WHERE token = ?", [token]);
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ message: "Ошибка выхода" });
+  } finally {
+    db.close();
+  }
+});
+
+app.get("/api/favorites", async (req, res) => {
+  const user = await getAuthUser(req);
+  if (!user) {
+    res.status(401).json({ message: "Требуется вход" });
+    return;
+  }
+  const db = createDb();
+  try {
+    const rows = await all(db, "SELECT country_id AS countryId FROM favorites WHERE user_id = ?", [user.id]);
+    res.json({ favorites: rows.map((row) => row.countryId) });
+  } catch (error) {
+    res.status(500).json({ message: "Ошибка получения избранного" });
+  } finally {
+    db.close();
+  }
+});
+
+app.post("/api/favorites/:countryId", async (req, res) => {
+  const user = await getAuthUser(req);
+  if (!user) {
+    res.status(401).json({ message: "Требуется вход" });
+    return;
+  }
+  const countryId = Number(req.params.countryId);
+  if (!Number.isInteger(countryId) || countryId <= 0) {
+    res.status(400).json({ message: "Некорректная страна" });
+    return;
+  }
+
+  const db = createDb();
+  try {
+    const country = await get(db, "SELECT id FROM countries WHERE id = ?", [countryId]);
+    if (!country) {
+      res.status(404).json({ message: "Страна не найдена" });
+      return;
+    }
+    const existing = await get(db, "SELECT 1 FROM favorites WHERE user_id = ? AND country_id = ?", [user.id, countryId]);
+    if (existing) {
+      await run(db, "DELETE FROM favorites WHERE user_id = ? AND country_id = ?", [user.id, countryId]);
+      res.json({ isFavorite: false });
+      return;
+    }
+    await run(db, "INSERT INTO favorites (user_id, country_id) VALUES (?, ?)", [user.id, countryId]);
+    res.json({ isFavorite: true });
+  } catch (error) {
+    res.status(500).json({ message: "Ошибка обновления избранного" });
   } finally {
     db.close();
   }

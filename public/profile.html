@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Мой профиль | On The Move</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Playfair+Display:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .profile-main { padding: 2rem 0 2.5rem; }
+      .profile-header { margin-bottom: 1.2rem; }
+      .profile-header h1 { margin: 0; font-family: "Playfair Display", serif; }
+      .profile-header p { margin: 0.35rem 0 0; color: #e2ebf8; }
+    </style>
+  </head>
+  <body>
+    <div style="min-height: 100vh; display: flex; flex-direction: column;">
+    <header class="hero" style="min-height: 28vh;">
+      <div class="overlay"></div>
+      <nav class="nav container">
+        <a class="logo" href="/">On the Move</a>
+        <ul class="menu">
+          <li><a href="/">На главную</a></li>
+        </ul>
+      </nav>
+      <div class="hero-content container" style="min-height: 16vh;">
+        <h1>Мой профиль</h1>
+        <p id="profile-user">Загрузка...</p>
+      </div>
+    </header>
+
+    <main class="profile-main container" style="flex: 1;">
+      <section class="profile-header">
+        <h1>Избранные страны</h1>
+        <p>Ваши сохраненные направления для будущих поездок.</p>
+      </section>
+      <section id="favorites-content" class="countries-grid"></section>
+    </main>
+
+    <footer class="footer">
+      <p>© 2026 On the move — вдохновляйся и путешествуй</p>
+    </footer>
+    </div>
+
+    <script src="./profile.js"></script>
+  </body>
+</html>

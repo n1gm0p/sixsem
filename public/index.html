@@ -17,10 +17,11 @@
       <div class="overlay"></div>
       <nav class="nav container">
         <div class="logo">On the Move</div>
-        <ul class="menu">
+        <ul class="menu nav-actions">
           <li><a href="#about">О нас</a></li>
-          <li><a href="#destinations">Направления</a></li>
           <li><a href="#countries">Топ стран</a></li>
+          <li><button id="auth-btn" type="button" class="nav-btn">Войти</button></li>
+          <li><button id="logout-btn" type="button" class="nav-btn hidden">Выйти</button></li>
         </ul>
       </nav>
       <div class="hero-content container">
@@ -65,6 +66,27 @@
     <footer class="footer">
       <p>© 2026 On the move — вдохновляйся и путешествуй</p>
     </footer>
+
+    <div id="auth-modal" class="auth-modal hidden">
+      <div class="auth-backdrop" data-close-auth="true"></div>
+      <div class="auth-dialog">
+        <h3 id="auth-title" class="auth-title">Вход</h3>
+        <form id="auth-form" class="auth-form">
+          <label for="auth-name" id="name-label" class="hidden">Имя</label>
+          <input id="auth-name" class="hidden" type="text" placeholder="Ваше имя" />
+
+          <label for="auth-email">Email</label>
+          <input id="auth-email" type="email" placeholder="you@example.com" required />
+
+          <label for="auth-password">Пароль</label>
+          <input id="auth-password" type="password" placeholder="Минимум 6 символов" required />
+
+          <button id="auth-submit" type="submit" class="auth-submit">Войти</button>
+          <p id="auth-error" class="auth-error hidden"></p>
+        </form>
+        <button id="auth-switch-mode" class="auth-switch-mode" type="button">Нет аккаунта? Регистрация</button>
+      </div>
+    </div>
 
     <script src="./app.js"></script>
   </body>
