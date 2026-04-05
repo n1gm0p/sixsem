@@ -16,7 +16,10 @@
     <header class="hero">
       <div class="overlay"></div>
       <nav class="nav container">
-        <div class="logo">On the Move</div>
+        <a class="logo" href="/">
+          <img class="logo-mark" src="./images/logo.svg" alt="" width="28" height="28" />
+          <span>On the Move</span>
+        </a>
         <ul class="menu nav-actions">
           <li><a href="#about">О нас</a></li>
           <li><a href="#countries">Топ стран</a></li>
@@ -102,9 +105,11 @@
     </header>
 
     <main>
-      <section id="countries" class="countries-section container">
-        <h2>Топ-6 стран для путешествий</h2>
-        <div id="countries-grid" class="countries-grid"></div>
+      <section id="countries" class="countries-section">
+        <div class="countries-section__inner container">
+          <h2>Топ-6 стран для путешествий</h2>
+          <div id="countries-grid" class="countries-grid"></div>
+        </div>
       </section>
 
       <section id="about" class="about-section">

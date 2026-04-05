@@ -24,9 +24,7 @@ function setupProfileNavMenu() {
     onLogout: async () => {
       try {
         await fetch("/api/auth/logout", { method: "POST", headers: authHeaders() });
-      } catch (error) {
-        // ignore network errors
-      }
+      } catch {}
       localStorage.removeItem(AUTH_TOKEN_KEY);
       window.location.href = "/";
     }

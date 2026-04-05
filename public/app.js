@@ -207,9 +207,7 @@ async function submitAuthForm(event) {
 async function logout() {
   try {
     await fetch("/api/auth/logout", { method: "POST", headers: authHeaders() });
-  } catch (error) {
-    // ignore network errors on logout
-  }
+  } catch {}
   currentToken = "";
   currentUser = null;
   favoriteCountryIds = new Set();

@@ -1,7 +1,3 @@
-/**
- * Кнопка-профиль (иконка UserRound) и выпадающее меню: избранное, выход.
- * Lucide-стиль SVG, без React.
- */
 function setupNavUserMenu(options) {
   const { getIsLoggedIn, onGuestClick, onLogout } = options;
   const root = document.getElementById("nav-user-root");

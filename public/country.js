@@ -63,9 +63,7 @@ async function fetchCurrentUser() {
 async function logout() {
   try {
     await fetch("/api/auth/logout", { method: "POST", headers: authHeaders() });
-  } catch (error) {
-    // ignore
-  }
+  } catch {}
   currentToken = "";
   currentUser = null;
   localStorage.removeItem(AUTH_TOKEN_KEY);
@@ -123,6 +121,105 @@ function setStarVisual(star, isFavorite) {
   star.title = isFavorite ? "В избранном" : "В избранное";
 }
 
+let countryBgIntervalId = null;
+
+function clearCountryBackgroundSlideshow() {
+  if (countryBgIntervalId !== null) {
+    clearInterval(countryBgIntervalId);
+    countryBgIntervalId = null;
+  }
+}
+
+function cssSafeUrl(url) {
+  return String(url).trim().replace(/\\/g, "/").replace(/"/g, "%22");
+}
+
+function collectCountryGalleryUrls(country) {
+  const add = (u, urls) => {
+    if (u && typeof u === "string" && u.trim() && !urls.includes(u.trim())) {
+      urls.push(u.trim());
+    }
+  };
+
+  if (Array.isArray(country.pageBgImages) && country.pageBgImages.length > 0) {
+    const onlyBg = [];
+    country.pageBgImages.forEach((u) => add(u, onlyBg));
+    return onlyBg;
+  }
+
+  const urls = [];
+  add(country.heroImage, urls);
+  if (Array.isArray(country.whatToSee)) {
+    country.whatToSee.forEach((p) => add(p && p.image, urls));
+  }
+  return urls;
+}
+
+function setSlideBackgroundImage(slideEl, url) {
+  slideEl.style.backgroundImage = `url("${cssSafeUrl(url)}")`;
+}
+
+function setSlideGradient(slideEl, gradient) {
+  const g =
+    gradient && String(gradient).trim()
+      ? String(gradient).trim()
+      : "linear-gradient(180deg, #314862, #203349)";
+  slideEl.style.backgroundImage = g;
+}
+
+function setupCountryPageBackground(country) {
+  clearCountryBackgroundSlideshow();
+  const layer = document.getElementById("country-bg-layer");
+  const slideA = document.getElementById("country-bg-slide-a");
+  const slideB = document.getElementById("country-bg-slide-b");
+  if (!layer || !slideA || !slideB) {
+    return;
+  }
+
+  layer.style.display = "";
+  const urls = collectCountryGalleryUrls(country);
+
+  if (urls.length === 0) {
+    setSlideGradient(slideA, country.cardGradient);
+    setSlideGradient(slideB, country.cardGradient);
+    slideA.classList.add("is-visible");
+    slideB.classList.remove("is-visible");
+    return;
+  }
+
+  let visible = slideA;
+  let hidden = slideB;
+  let current = 0;
+
+  setSlideBackgroundImage(visible, urls[0]);
+  visible.classList.add("is-visible");
+  hidden.classList.remove("is-visible");
+
+  if (urls.length > 1) {
+    setSlideBackgroundImage(hidden, urls[1]);
+  } else {
+    setSlideGradient(hidden, country.cardGradient);
+  }
+
+  const prefersReduced =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (urls.length < 2 || prefersReduced) {
+    return;
+  }
+
+  countryBgIntervalId = window.setInterval(() => {
+    current = (current + 1) % urls.length;
+    setSlideBackgroundImage(hidden, urls[current]);
+    hidden.classList.add("is-visible");
+    visible.classList.remove("is-visible");
+    const tmp = visible;
+    visible = hidden;
+    hidden = tmp;
+  }, 8000);
+}
+
 async function setupFavoriteStar(countryId) {
   const star = document.getElementById("country-favorite-star");
   if (!star) {
@@ -159,7 +256,6 @@ async function setupFavoriteStar(countryId) {
 
 async function loadCountry() {
   const countryId = getCountryIdFromUrl();
-  const hero = document.querySelector(".country-hero");
   const heroTitle = document.getElementById("hero-title");
   const description = document.getElementById("country-description");
   const places = document.getElementById("what-to-see");
@@ -179,13 +275,7 @@ async function loadCountry() {
     document.title = `${country.name} | On The Move`;
     heroTitle.textContent = country.heroTitle || country.name;
     description.textContent = country.description || "";
-    if (country.heroImage) {
-      hero.style.backgroundImage = `linear-gradient(180deg, rgba(10, 16, 28, 0.52), rgba(10, 16, 28, 0.82)), url("${country.heroImage}")`;
-      hero.style.backgroundSize = "cover";
-      hero.style.backgroundPosition = "center";
-    } else {
-      hero.style.backgroundImage = "none";
-    }
+    setupCountryPageBackground(country);
 
     places.innerHTML = "";
     if (Array.isArray(country.whatToSee) && country.whatToSee.length > 0) {
@@ -221,6 +311,11 @@ async function loadCountry() {
 
     await setupFavoriteStar(countryId);
   } catch (error) {
+    clearCountryBackgroundSlideshow();
+    const bgLayer = document.getElementById("country-bg-layer");
+    if (bgLayer) {
+      bgLayer.style.display = "none";
+    }
     heroTitle.textContent = "Страна не найдена";
     description.textContent = "Проверьте ссылку или вернитесь на главную страницу.";
     places.innerHTML = "";

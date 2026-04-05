@@ -14,10 +14,17 @@
     <link rel="stylesheet" href="./country.css" />
   </head>
   <body>
+    <div id="country-bg-layer" class="country-bg-layer" aria-hidden="true">
+      <div class="country-bg-slide is-visible" id="country-bg-slide-a"></div>
+      <div class="country-bg-slide" id="country-bg-slide-b"></div>
+    </div>
     <main id="country-page" class="country-page">
       <header class="country-hero">
         <nav class="nav container">
-          <a class="logo" href="/">On the Move</a>
+          <a class="logo" href="/">
+            <img class="logo-mark" src="./images/logo.svg" alt="" width="28" height="28" />
+            <span>On the Move</span>
+          </a>
           <ul class="menu country-nav-menu">
             <li><a href="/#about">О нас</a></li>
             <li><a href="/#countries">Топ стран</a></li>

@@ -9,6 +9,12 @@ const DB_PATH = path.join(__dirname, "data", "tourism.db");
 require("fs").mkdirSync(path.join(__dirname, "data"), { recursive: true });
 
 app.use(express.json());
+app.use((req, res, next) => {
+  if (String(req.originalUrl || "").startsWith("/api")) {
+    res.set("Cache-Control", "no-store");
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, "public")));
 
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 14;
@@ -53,9 +59,20 @@ function get(db, sql, params = []) {
   });
 }
 
-/** Пароль хранится в БД как есть (без bcrypt/хэша); только сравнение строк. */
 function passwordMatchesStored(plain, stored) {
   return String(plain) === String(stored);
+}
+
+function parseStringArrayJson(value) {
+  if (!value || typeof value !== "string") {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string" && item.trim()) : [];
+  } catch {
+    return [];
+  }
 }
 
 function parseBearerToken(headerValue) {
@@ -159,6 +176,9 @@ async function initializeDatabase() {
   if (!columnNames.has("tips")) {
     await run(db, "ALTER TABLE countries ADD COLUMN tips TEXT");
   }
+  if (!columnNames.has("page_bg_images")) {
+    await run(db, "ALTER TABLE countries ADD COLUMN page_bg_images TEXT");
+  }
 
   const userColumns = await all(db, "PRAGMA table_info(users)");
   const userColumnNames = new Set(userColumns.map((column) => column.name));
@@ -215,7 +235,7 @@ app.get("/api/countries/:id", async (req, res) => {
       db,
       `SELECT id, name, subtitle, description, card_gradient AS cardGradient, hero_image AS heroImage,
               COALESCE(hero_title, name) AS heroTitle, COALESCE(what_to_see, '[]') AS whatToSee,
-              COALESCE(tips, '[]') AS tips
+              COALESCE(tips, '[]') AS tips, page_bg_images AS pageBgImagesJson
        FROM countries
        WHERE id = ?`,
       [id]
@@ -225,8 +245,10 @@ app.get("/api/countries/:id", async (req, res) => {
       return;
     }
 
+    const { pageBgImagesJson, ...rest } = row;
     res.json({
-      ...row,
+      ...rest,
+      pageBgImages: parseStringArrayJson(pageBgImagesJson),
       whatToSee: JSON.parse(row.whatToSee || "[]"),
       tips: JSON.parse(row.tips || "[]")
     });
@@ -396,17 +418,20 @@ app.post("/api/favorites/:countryId", async (req, res) => {
 });
 
 app.post("/api/countries", async (req, res) => {
-  const { name, subtitle, description, cardGradient, heroImage, heroTitle, whatToSee, tips } = req.body;
+  const { name, subtitle, description, cardGradient, heroImage, heroTitle, whatToSee, tips, pageBgImages } =
+    req.body;
   if (!name || !subtitle || !description || !cardGradient) {
     res.status(400).json({ message: "Заполните все поля" });
     return;
   }
 
+  const pageBgList = Array.isArray(pageBgImages) ? pageBgImages.filter((u) => typeof u === "string" && u.trim()) : [];
+
   const db = createDb();
   try {
     const result = await run(
       db,
-      "INSERT INTO countries (name, subtitle, description, card_gradient, hero_image, hero_title, what_to_see, tips) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO countries (name, subtitle, description, card_gradient, hero_image, hero_title, what_to_see, tips, page_bg_images) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         name,
         subtitle,
@@ -415,7 +440,8 @@ app.post("/api/countries", async (req, res) => {
         heroImage || "",
         heroTitle || name,
         JSON.stringify(Array.isArray(whatToSee) ? whatToSee : []),
-        JSON.stringify(Array.isArray(tips) ? tips : [])
+        JSON.stringify(Array.isArray(tips) ? tips : []),
+        pageBgList.length ? JSON.stringify(pageBgList) : null
       ]
     );
 
@@ -428,7 +454,8 @@ app.post("/api/countries", async (req, res) => {
       heroImage: heroImage || "",
       heroTitle: heroTitle || name,
       whatToSee: Array.isArray(whatToSee) ? whatToSee : [],
-      tips: Array.isArray(tips) ? tips : []
+      tips: Array.isArray(tips) ? tips : [],
+      pageBgImages: pageBgList
     });
   } catch (error) {
     res.status(500).json({ message: "Не удалось добавить страну" });
